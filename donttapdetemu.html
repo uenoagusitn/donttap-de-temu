@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Juego 4x4 - Toca los negros</title>
+  <style>
+    body {
+      background-color: #222;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 30px;
+    }
+    #info {
+      display: flex;
+      justify-content: space-between;
+      width: 300px;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(4, 80px);
+      grid-template-rows: repeat(4, 80px);
+      gap: 5px;
+    }
+    .cell {
+      width: 80px;
+      height: 80px;
+      background-color: white;
+      border: 1px solid #555;
+      cursor: pointer;
+      transition: background 0.05s;
+    }
+    .black {
+      background-color: black;
+    }
+    #message {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #ff5555;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">
+    <div id="score">Puntaje: 0</div>
+    <div id="timer">Tiempo: 20</div>
+  </div>
+  <div id="board"></div>
+  <div id="message">toca la "R" para reiniciarle ahi xddd</div>
+
+  <script>
+    const board = document.getElementById('board');
+    const scoreEl = document.getElementById('score');
+    const timerEl = document.getElementById('timer');
+    const message = document.getElementById('message');
+
+    let score = 0;
+    let time = 20;
+    let gameOver = false;
+    let cells = [];
+    let timerInterval;
+    let lastBlackIndexes = [];
+
+    function resetGame() {
+      clearInterval(timerInterval);
+      board.innerHTML = "";
+      cells = [];
+      lastBlackIndexes = [];
+      score = 0;
+      time = 20;
+      gameOver = false;
+      scoreEl.textContent = 'Puntaje: 0';
+      timerEl.textContent = 'Tiempo: 20';
+      message.textContent = 'toca la "R" para reiniciarle ahi xddd';
+
+      // Crear tablero
+      for (let i = 0; i < 16; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        board.appendChild(cell);
+        cells.push(cell);
+
+        cell.addEventListener('click', () => {
+          if (gameOver) return;
+
+          if (cell.classList.contains('black')) {
+            cell.classList.remove('black');
+            score++;
+            scoreEl.textContent = 'Puntaje: ' + score;
+            makeRandomBlack();
+          } else {
+            endGame('perdiste putazo.');
+          }
+        });
+      }
+
+      for (let i = 0; i < 3; i++) makeRandomBlack();
+
+      // Temporizador
+      timerInterval = setInterval(() => {
+        if (!gameOver) {
+          time--;
+          timerEl.textContent = 'Tiempo: ' + time;
+          if (time <= 0) {
+            endGame('se te fue el tren arania');
+          }
+        }
+      }, 1000);
+    }
+
+    function getWhiteCells() {
+      return cells.filter(cell => !cell.classList.contains('black'));
+    }
+
+    function makeRandomBlack() {
+      const whiteCells = getWhiteCells();
+
+      // Filtrar para evitar repetir recientes
+      const filteredCells = whiteCells.filter(cell => {
+        return !lastBlackIndexes.includes(cells.indexOf(cell));
+      });
+
+      const candidates = filteredCells.length > 0 ? filteredCells : whiteCells;
+
+      if (candidates.length > 0) {
+        const randomIndex = Math.floor(Math.random() * candidates.length);
+        const chosenCell = candidates[randomIndex];
+        const chosenIndex = cells.indexOf(chosenCell);
+
+        chosenCell.classList.add('black');
+
+        lastBlackIndexes.push(chosenIndex);
+        if (lastBlackIndexes.length > 6) {
+          lastBlackIndexes.shift(); // mantener historial corto
+        }
+      }
+    }
+
+    function endGame(msg) {
+      gameOver = true;
+      clearInterval(timerInterval);
+      message.textContent = msg + ' toca la "R" para reiniciarle ahi xddd.';
+    }
+
+    // Tecla "R" para reiniciar
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'r') {
+        resetGame();
+      }
+    });
+
+    // Iniciar juego
+    resetGame();
+  </script>
+</body>
+</html>
